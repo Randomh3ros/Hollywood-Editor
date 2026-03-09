@@ -2,6 +2,7 @@
   "name": "hollywood-editor-pro",
   "version": "1.0.0",
   "description": "Professional AI-powered video editor for creators.",
+  "main": "electron-main.js",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -10,7 +11,19 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
-    "serve:ssr:app": "node dist/app/server/server.mjs"
+    "serve:ssr:app": "node dist/app/server/server.mjs",
+    "electron:start": "ng build --base-href ./ && electron .",
+    "electron:build": "ng build --base-href ./ && electron-builder build --windows",
+    "cap:sync": "ng build && npx cap sync android"
+  },
+  "build": {
+    "appId": "com.hollywood.editor",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis"
+    }
   },
   "private": true,
   "dependencies": {
@@ -28,7 +41,9 @@
     "express": "^5.1.0",
     "motion": "^12.23.24",
     "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
   },
   "devDependencies": {
     "@angular/build": "^21.0.0",
@@ -45,6 +60,9 @@
     "tailwindcss": "^4.1.12",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.47.0",
-    "vitest": "^4.0.0"
+    "vitest": "^4.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "electron": "^34.0.0",
+    "electron-builder": "^25.0.0"
   }
 }

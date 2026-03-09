@@ -1,0 +1,6 @@
+{
+  "appId": "com.hollywood.editor",
+  "appName": "Hollywood Editor",
+  "webDir": "dist/app/browser",
+  "bundledWebRuntime": false
+}

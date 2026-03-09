@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Hollywood Editor</string>
+    <string name="title_activity_main">Hollywood Editor</string>
+    <string name="package_name">com.hollywood.editor</string>
+    <string name="custom_url_scheme">com.hollywood.editor</string>
+</resources>
