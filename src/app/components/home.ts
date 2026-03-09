@@ -24,8 +24,8 @@ import { CommonModule } from '@angular/common';
         
         <div class="flex items-center justify-between mb-8 relative z-10">
           <h1 class="text-5xl md:text-7xl font-black tracking-tighter uppercase italic flex flex-col">
-            <span class="relative inline-block text-transparent bg-clip-text bg-cover bg-center drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]" 
-                  style="background-image: url('https://images.unsplash.com/photo-1542704792-e30dac463c90?q=80&w=2070&auto=format&fit=crop'); -webkit-background-clip: text; -webkit-text-stroke: 1px rgba(255,255,255,0.3);">
+            <span class="relative inline-block text-transparent bg-clip-text bg-cover bg-center drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] animate-shimmer" 
+                  style="background-image: linear-gradient(90deg, rgba(255,255,255,0.9) 0%, rgba(209,213,219,0.9) 50%, rgba(255,255,255,0.9) 100%), url('https://images.unsplash.com/photo-1542704792-e30dac463c90?q=80&w=2070&auto=format&fit=crop'); background-size: 200% auto, cover; -webkit-background-clip: text; -webkit-text-stroke: 1px rgba(255,255,255,0.3); background-blend-mode: overlay;">
               Hollywood
               <span class="absolute inset-0 border-2 border-white/10 pointer-events-none mix-blend-overlay"></span>
             </span>
@@ -34,7 +34,7 @@ import { CommonModule } from '@angular/common';
               <span class="h-[3px] flex-grow bg-gradient-to-r from-indigo-400 to-transparent rounded-full shadow-[0_0_15px_rgba(129,140,248,0.5)]"></span>
             </span>
           </h1>
-          <div class="flex gap-4">
+          <div class="flex gap-4 animate-in fade-in duration-1000 slide-in-from-right-8 hover:scale-105 transition-transform">
             <button class="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center hover:bg-zinc-800 transition-colors">
               <span class="material-icons">notifications</span>
             </button>
@@ -44,7 +44,30 @@ import { CommonModule } from '@angular/common';
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Red Carpet & Photographers -->
+        <div class="absolute bottom-0 left-0 right-0 h-32 z-10 pointer-events-none">
+          <!-- The Red Carpet -->
+          <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120%] h-16 bg-gradient-to-t from-red-700 to-red-600 skew-x-[-15deg] shadow-[0_-10px_30px_rgba(185,28,28,0.4)]"></div>
+          
+          <!-- Photographers Line -->
+          <div class="absolute bottom-4 left-0 right-0 flex justify-around items-end px-12">
+            @for (i of [1,2,3,4,5,6,7,8]; track i) {
+              <div class="relative flex flex-col items-center">
+                <!-- Photographer Silhouette -->
+                <div class="w-8 h-12 bg-zinc-900 rounded-t-lg opacity-80"></div>
+                <!-- Camera Flash -->
+                <div class="absolute -top-2 w-4 h-4 bg-white rounded-full blur-sm animate-flash"
+                     [style.animation-delay]="(i * 0.3) + 's'"
+                     [style.animation-duration]="(0.5 + (i % 3) * 0.2) + 's'"></div>
+                <div class="absolute -top-4 w-12 h-12 bg-white/20 rounded-full blur-xl animate-flash"
+                     [style.animation-delay]="(i * 0.3) + 's'"
+                     [style.animation-duration]="(0.5 + (i % 3) * 0.2) + 's'"></div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-20">
           <button (click)="createWithAi()" class="group relative overflow-hidden rounded-3xl bg-indigo-600 p-8 h-64 flex flex-col justify-end transition-all hover:scale-[1.02] active:scale-[0.98] text-left w-full">
             <div class="absolute top-0 right-0 p-8 opacity-20 group-hover:scale-110 transition-transform">
               <span class="material-icons text-9xl">auto_awesome</span>
