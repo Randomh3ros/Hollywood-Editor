@@ -1,0 +1,8 @@
+{
+  "name": "Hollywood Editor",
+  "description": "AI-powered video generator and editing platform for viral short-form content.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
