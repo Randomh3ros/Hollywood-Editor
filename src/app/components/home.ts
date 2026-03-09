@@ -11,10 +11,28 @@ import { CommonModule } from '@angular/common';
   template: `
     <div class="min-h-screen bg-[#050505] text-white font-sans pb-20">
       <!-- Hero Section -->
-      <header class="pt-16 pb-12 px-6 max-w-7xl mx-auto">
-        <div class="flex items-center justify-between mb-8">
-          <h1 class="text-4xl md:text-6xl font-black tracking-tighter uppercase italic">
-            Hollywood<br><span class="text-indigo-500">Editor</span>
+      <header class="pt-24 pb-20 px-6 max-w-7xl mx-auto relative overflow-hidden rounded-3xl mt-6">
+        <!-- Cinematic Background Image -->
+        <div class="absolute inset-0 z-0">
+          <img src="https://images.unsplash.com/photo-1581010866019-907fd990d62e?q=80&w=2070&auto=format&fit=crop" 
+               alt="Hollywood Sunset" 
+               class="w-full h-full object-cover opacity-60 scale-110"
+               referrerpolicy="no-referrer">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent"></div>
+          <div class="absolute inset-0 bg-gradient-to-r from-[#050505] via-transparent to-[#050505]"></div>
+        </div>
+        
+        <div class="flex items-center justify-between mb-8 relative z-10">
+          <h1 class="text-5xl md:text-7xl font-black tracking-tighter uppercase italic flex flex-col">
+            <span class="relative inline-block text-transparent bg-clip-text bg-cover bg-center drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]" 
+                  style="background-image: url('https://images.unsplash.com/photo-1542704792-e30dac463c90?q=80&w=2070&auto=format&fit=crop'); -webkit-background-clip: text; -webkit-text-stroke: 1px rgba(255,255,255,0.3);">
+              Hollywood
+              <span class="absolute inset-0 border-2 border-white/10 pointer-events-none mix-blend-overlay"></span>
+            </span>
+            <span class="text-indigo-400 mt-[-0.1em] relative flex items-center gap-4 drop-shadow-lg">
+              Editor
+              <span class="h-[3px] flex-grow bg-gradient-to-r from-indigo-400 to-transparent rounded-full shadow-[0_0_15px_rgba(129,140,248,0.5)]"></span>
+            </span>
           </h1>
           <div class="flex gap-4">
             <button class="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center hover:bg-zinc-800 transition-colors">

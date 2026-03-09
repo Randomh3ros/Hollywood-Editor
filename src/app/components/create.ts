@@ -11,52 +11,58 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="min-h-screen bg-[#050505] text-white font-sans p-6">
+    <div class="min-h-screen bg-transparent text-white font-sans p-6 backdrop-blur-3xl">
       <header class="flex items-center justify-between mb-12">
-        <button routerLink="/" class="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center">
+        <button routerLink="/" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
           <span class="material-icons">arrow_back</span>
         </button>
-        <h1 class="text-xl font-black uppercase italic tracking-widest">Create Video</h1>
+        <h1 class="text-xl font-black uppercase italic tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">Create Video</h1>
         <div class="w-10"></div>
       </header>
 
       <div class="max-w-2xl mx-auto">
         <!-- Mode Selector -->
-        <div class="flex p-1 bg-zinc-900 rounded-2xl mb-8">
+        <div class="flex p-1 bg-white/5 border border-white/10 rounded-2xl mb-8">
           <button 
             (click)="mode.set('prompt')"
             [class.bg-indigo-600]="mode() === 'prompt'"
-            class="flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-widest transition-all">
+            [class.shadow-lg]="mode() === 'prompt'"
+            [class.shadow-indigo-500/20]="mode() === 'prompt'"
+            class="flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95">
             AI Prompt
           </button>
           <button 
             (click)="mode.set('script')"
             [class.bg-indigo-600]="mode() === 'script'"
-            class="flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-widest transition-all">
+            [class.shadow-lg]="mode() === 'script'"
+            [class.shadow-indigo-500/20]="mode() === 'script'"
+            class="flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95">
             Script
           </button>
           <button 
             (click)="mode.set('upload')"
             [class.bg-indigo-600]="mode() === 'upload'"
-            class="flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-widest transition-all">
+            [class.shadow-lg]="mode() === 'upload'"
+            [class.shadow-indigo-500/20]="mode() === 'upload'"
+            class="flex-1 py-3 rounded-xl text-sm font-bold uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95">
             Upload
           </button>
         </div>
 
         @if (mode() === 'prompt') {
           <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+            <div class="bg-white/5 rounded-3xl p-6 border border-white/10">
               <label for="prompt-input" class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">What should the video be about?</label>
               <textarea 
                 id="prompt-input"
                 [(ngModel)]="prompt"
                 placeholder="e.g. A motivational video about success with cinematic shots of a city at night..."
-                class="w-full bg-transparent border-none focus:ring-0 text-lg resize-none h-40 placeholder:text-zinc-700"
+                class="w-full bg-transparent border-none focus:ring-0 text-lg resize-none h-40 placeholder:text-zinc-800"
               ></textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-              <div class="bg-zinc-900 rounded-2xl p-4 border border-zinc-800">
+              <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
                 <label for="voice-select" class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Voice Style</label>
                 <select id="voice-select" [(ngModel)]="voice" class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold">
                   <option value="Kore">Male Narrator</option>
@@ -72,7 +78,7 @@ import { FormsModule } from '@angular/forms';
                   <option value="Announcer">Announcer</option>
                 </select>
               </div>
-              <div class="bg-zinc-900 rounded-2xl p-4 border border-zinc-800">
+              <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
                 <label for="aspect-select" class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Aspect Ratio</label>
                 <select id="aspect-select" [(ngModel)]="aspectRatio" class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold">
                   <option value="9:16">9:16 (TikTok/Reels)</option>
@@ -82,25 +88,25 @@ import { FormsModule } from '@angular/forms';
               </div>
             </div>
 
-            <div class="bg-zinc-900 rounded-2xl p-4 border border-zinc-800">
+            <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
               <label for="resolution-select" class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Resolution</label>
               <div class="flex gap-4">
                 <button (click)="resolution.set('720p')" 
                         [class.bg-indigo-600]="resolution() === '720p'"
-                        [class.bg-zinc-800]="resolution() !== '720p'"
-                        class="flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-zinc-700 transition-all">
+                        [class.bg-white/5]="resolution() !== '720p'"
+                        class="flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-white/10 transition-all hover:scale-105 active:scale-95">
                   720p (Fast)
                 </button>
                 <button (click)="resolution.set('1080p')" 
                         [class.bg-indigo-600]="resolution() === '1080p'"
-                        [class.bg-zinc-800]="resolution() !== '1080p'"
-                        class="flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-zinc-700 transition-all">
+                        [class.bg-white/5]="resolution() !== '1080p'"
+                        class="flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-white/10 transition-all hover:scale-105 active:scale-95">
                   1080p (HD)
                 </button>
               </div>
             </div>
 
-            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+            <div class="bg-white/5 rounded-3xl p-6 border border-white/10">
               <p class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Visual Style</p>
               <div class="grid grid-cols-3 gap-3">
                 @for (style of ['Cinematic', 'Cartoon', 'Realistic', 'Cyberpunk', 'Anime', 'Vintage', 'Retro', 'Minimalist', 'Documentary', 'Abstract']; track style) {
@@ -108,7 +114,7 @@ import { FormsModule } from '@angular/forms';
                     (click)="visualStyle = style"
                     [class.border-indigo-500]="visualStyle === style"
                     [class.bg-indigo-600/10]="visualStyle === style"
-                    class="p-4 rounded-2xl border border-zinc-800 flex flex-col items-center gap-2 transition-all hover:border-zinc-600">
+                    class="p-4 rounded-2xl border border-white/5 flex flex-col items-center gap-2 transition-all hover:border-white/20 hover:scale-105 active:scale-95">
                     <span class="material-icons text-xl" [class.text-indigo-400]="visualStyle === style">
                       {{ 
                         style === 'Cinematic' ? 'movie' : 
@@ -161,7 +167,7 @@ import { FormsModule } from '@angular/forms';
           <button 
             (click)="generate()"
             [disabled]="isGenerating()"
-            class="w-full py-5 rounded-2xl bg-indigo-600 font-black uppercase italic tracking-widest text-xl shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100">
+            class="w-full py-5 rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 font-black uppercase italic tracking-widest text-xl shadow-2xl shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100">
             @if (isGenerating()) {
               <div class="flex items-center justify-center gap-3">
                 <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

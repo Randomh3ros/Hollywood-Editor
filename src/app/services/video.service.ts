@@ -118,7 +118,12 @@ export class VideoService {
         author: 'AlexEdit',
         thumbnailUrl: 'https://picsum.photos/seed/t1/400/225',
         favorites: 1240,
-        config: { clips: [], captions: [] }
+        config: { 
+          clips: [
+            { id: 'c1', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', startTime: 0, duration: 15, type: 'video' }
+          ], 
+          captions: ['WOW!', 'LOOK AT THIS', 'UNBELIEVABLE'] 
+        }
       },
       {
         id: 't2',
@@ -126,7 +131,12 @@ export class VideoService {
         author: 'GlobeTrotter',
         thumbnailUrl: 'https://picsum.photos/seed/t2/400/225',
         favorites: 850,
-        config: { clips: [], captions: [] }
+        config: { 
+          clips: [
+            { id: 'c2', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', startTime: 0, duration: 15, type: 'video' }
+          ], 
+          captions: ['ADVENTURE', 'AWAITS', 'EXPLORE'] 
+        }
       },
       {
         id: 't3',
@@ -134,7 +144,12 @@ export class VideoService {
         author: 'NoobMaster69',
         thumbnailUrl: 'https://picsum.photos/seed/t3/400/225',
         favorites: 3200,
-        config: { clips: [], captions: [] }
+        config: { 
+          clips: [
+            { id: 'c3', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4', startTime: 0, duration: 15, type: 'video' }
+          ], 
+          captions: ['GG', 'PENTA KILL', 'INSANE'] 
+        }
       }
     ]);
   }

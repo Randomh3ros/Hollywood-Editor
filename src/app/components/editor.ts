@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { VideoService, Project, AudioTrack, LibraryTrack } from '../services/video.service';
-import { AiService } from '../services/ai.service';
+import { VideoService, Project, AudioTrack, LibraryTrack, Template } from '../services/video.service';
+import { AiService, ScriptResult } from '../services/ai.service';
 import { AdService } from '../services/ad.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,35 +11,44 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
-    <div class="h-screen bg-[#050505] text-white font-sans flex flex-col overflow-hidden">
+    <div class="h-screen bg-transparent text-white font-sans flex flex-col overflow-hidden backdrop-blur-3xl">
       <!-- Header -->
-      <header class="h-16 border-b border-zinc-800 flex items-center justify-between px-6 flex-shrink-0">
+      <header class="h-16 border-b border-white/10 flex items-center justify-between px-6 flex-shrink-0 bg-black/20">
         <div class="flex items-center gap-4">
-          <button routerLink="/" class="text-zinc-500 hover:text-white" (click)="adService.incrementClick(false)">
+          <button routerLink="/" class="text-zinc-400 hover:text-white transition-all hover:scale-110 active:scale-95" (click)="adService.incrementClick(false)">
             <span class="material-icons">close</span>
           </button>
-          <div class="h-4 w-[1px] bg-zinc-800"></div>
-          <h1 class="font-bold text-sm uppercase tracking-widest">{{ project()?.name }}</h1>
+          <div class="h-4 w-[1px] bg-white/10"></div>
+          <h1 class="font-black text-xs uppercase tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">{{ project()?.name }}</h1>
         </div>
         <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1 mr-4">
+            <button (click)="videoService.undo()" class="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-all active:scale-90">
+              <span class="material-icons text-sm">undo</span>
+            </button>
+            <button (click)="videoService.redo()" class="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-all active:scale-90">
+              <span class="material-icons text-sm">redo</span>
+            </button>
+          </div>
+
           @if (!videoService.proStatus()) {
-            <button (click)="goPro()" class="px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform flex items-center gap-2">
+            <button (click)="goPro()" class="px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 text-black text-[10px] font-black uppercase tracking-widest shadow-xl shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
               <span class="material-icons text-sm">workspace_premium</span>
               Go Pro
             </button>
           } @else {
-            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-amber-500/30">
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-amber-500/30 animate-pulse">
               <span class="material-icons text-xs text-amber-500">workspace_premium</span>
               <span class="text-[8px] font-black text-amber-500 uppercase tracking-widest">Pro Member</span>
             </div>
           }
-          <button (click)="saveProject()" class="px-4 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800">
+          <button (click)="saveProject()" class="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white/10 hover:scale-105 active:scale-95 transition-all">
             Save
           </button>
-          <button class="px-4 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800" (click)="adService.incrementClick(false)">
+          <button class="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white/10 hover:scale-105 active:scale-95 transition-all" (click)="adService.incrementClick(false)">
             Preview
           </button>
-          <button routerLink="/export" class="px-4 py-1.5 rounded-full bg-indigo-600 text-xs font-bold uppercase tracking-widest shadow-lg shadow-indigo-500/20" (click)="adService.incrementClick()">
+          <button routerLink="/export" class="px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-xs font-bold uppercase tracking-widest shadow-xl shadow-indigo-500/20 hover:scale-105 active:scale-95 transition-all" (click)="adService.incrementClick()">
             Export
           </button>
         </div>
@@ -48,46 +57,55 @@ import { FormsModule } from '@angular/forms';
       <!-- Main Content Area -->
       <div class="flex-1 flex overflow-hidden">
         <!-- Left Sidebar: Tools -->
-        <aside class="w-20 border-r border-zinc-800 flex flex-col items-center py-6 gap-8 flex-shrink-0">
-          <button class="flex flex-col items-center gap-1 text-indigo-500 hover:scale-110 transition-transform" (click)="adService.incrementClick(false)">
+        <aside class="w-20 border-r border-white/10 flex flex-col items-center py-6 gap-8 flex-shrink-0 bg-black/10">
+          <button class="flex flex-col items-center gap-1 text-indigo-400 hover:scale-110 transition-all active:scale-90" (click)="showAiGeneratePanel.set(!showAiGeneratePanel())">
             <span class="material-icons">auto_fix_high</span>
-            <span class="text-[8px] font-bold uppercase tracking-tighter">AI Edit</span>
+            <span class="text-[8px] font-bold uppercase tracking-tighter">AI Gen</span>
           </button>
-          <button class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white hover:scale-110 transition-transform" (click)="openImageGenerator()">
+          <button class="flex flex-col items-center gap-1 text-zinc-400 hover:text-white hover:scale-110 transition-all active:scale-90" (click)="showScriptAssistant.set(!showScriptAssistant())">
+            <span class="material-icons">description</span>
+            <span class="text-[8px] font-bold uppercase tracking-tighter">Script</span>
+          </button>
+          <button class="flex flex-col items-center gap-1 text-zinc-400 hover:text-white hover:scale-110 transition-all active:scale-90" (click)="showTemplateSelector.set(!showTemplateSelector())">
+            <span class="material-icons">dashboard</span>
+            <span class="text-[8px] font-bold uppercase tracking-tighter">Templates</span>
+          </button>
+          <button class="flex flex-col items-center gap-1 text-zinc-400 hover:text-white hover:scale-110 transition-all active:scale-90" (click)="openImageGenerator()">
             <span class="material-icons">image</span>
             <span class="text-[8px] font-bold uppercase tracking-tighter">AI Image</span>
           </button>
-          <button class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white hover:scale-110 transition-transform" (click)="adService.incrementClick(false)">
-            <span class="material-icons">subtitles</span>
-            <span class="text-[8px] font-bold uppercase tracking-tighter">Captions</span>
-          </button>
-          <button class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white hover:scale-110 transition-transform" 
-                  [class.text-indigo-500]="showAudioPanel()"
+          <button class="flex flex-col items-center gap-1 text-zinc-400 hover:text-white hover:scale-110 transition-all active:scale-90" 
+                  [class.text-indigo-400]="showAudioPanel()"
                   (click)="toggleAudioPanel()">
             <span class="material-icons">music_note</span>
             <span class="text-[8px] font-bold uppercase tracking-tighter">Audio</span>
           </button>
-          <button class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white hover:scale-110 transition-transform" (click)="adService.incrementClick(false)">
-            <span class="material-icons">layers</span>
-            <span class="text-[8px] font-bold uppercase tracking-tighter">Overlays</span>
-          </button>
-          <button class="flex flex-col items-center gap-1 text-zinc-500 hover:text-white hover:scale-110 transition-transform" (click)="adService.incrementClick(false)">
-            <span class="material-icons">emoji_emotions</span>
-            <span class="text-[8px] font-bold uppercase tracking-tighter">Memes</span>
+          <button class="flex flex-col items-center gap-1 text-zinc-400 hover:text-white hover:scale-110 transition-all active:scale-90" (click)="adService.incrementClick(false)">
+            <span class="material-icons">subtitles</span>
+            <span class="text-[8px] font-bold uppercase tracking-tighter">Captions</span>
           </button>
         </aside>
 
         <!-- Center: Video Preview -->
-        <main class="flex-1 bg-zinc-950 flex flex-col items-center justify-center p-8 relative">
-          <div class="aspect-[9/16] h-full max-h-[600px] bg-black rounded-3xl shadow-2xl overflow-hidden relative border transition-all duration-500"
-               [class.border-zinc-800]="!isBeatSyncing()"
+        <main class="flex-1 flex flex-col items-center justify-center p-8 relative bg-black/5">
+          <div class="aspect-[9/16] h-full max-h-[600px] bg-black rounded-[2.5rem] shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-hidden relative border transition-all duration-700"
+               [class.border-white/10]="!isBeatSyncing()"
                [class.border-indigo-500]="isBeatSyncing()"
-               [class.shadow-[0_0_50px_rgba(99,102,241,0.3)]]="isBeatSyncing()"
+               [class.shadow-[0_0_80px_rgba(99,102,241,0.4)]]="isBeatSyncing()"
                [class.scale-[1.02]]="isBeatSyncing()">
-            <img [src]="project()?.thumbnailUrl || 'https://picsum.photos/seed/preview/400/711'" 
-                 class="w-full h-full object-cover"
-                 alt="Main Video Preview"
-                 referrerpolicy="no-referrer">
+            
+            <!-- Real-time Preview Video/Image -->
+            @if (project()?.clips?.length) {
+              <video [src]="project()?.clips?.[0]?.url" 
+                     class="w-full h-full object-cover"
+                     autoplay loop muted playsinline
+                     referrerpolicy="no-referrer"></video>
+            } @else {
+              <img [src]="project()?.thumbnailUrl || 'https://picsum.photos/seed/preview/400/711'" 
+                   class="w-full h-full object-cover"
+                   alt="Main Video Preview"
+                   referrerpolicy="no-referrer">
+            }
             
             <!-- Beat Sync Pulse Overlay -->
             @if (isBeatSyncing()) {
@@ -140,8 +158,105 @@ import { FormsModule } from '@angular/forms';
         </main>
 
         <!-- Right Sidebar: Properties/AI Suggestions -->
-        <aside class="w-80 border-l border-zinc-800 bg-zinc-900/50 p-6 flex flex-col gap-6 overflow-y-auto">
-          @if (showAudioPanel()) {
+        <aside class="w-80 border-l border-white/10 bg-black/20 p-6 flex flex-col gap-6 overflow-y-auto backdrop-blur-md">
+          @if (showAiGeneratePanel()) {
+            <div class="animate-in fade-in slide-in-from-right-4 duration-500 space-y-6">
+              <div class="flex items-center justify-between">
+                <h3 class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">AI Scene Generator</h3>
+                <button (click)="showAiGeneratePanel.set(false)" class="text-zinc-500 hover:text-white"><span class="material-icons text-sm">close</span></button>
+              </div>
+              
+              <div class="space-y-4">
+                <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                  <label for="ai-prompt-area" class="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-2">Scene Prompt</label>
+                  <textarea id="ai-prompt-area" [(ngModel)]="aiPrompt" placeholder="Describe the scene..." class="w-full bg-transparent border-none focus:ring-0 text-xs h-24 resize-none"></textarea>
+                  
+                  <div class="mt-4 pt-4 border-t border-white/5">
+                    <p class="text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-3">Suggestions</p>
+                    <div class="flex flex-wrap gap-2">
+                      @for (suggestion of promptSuggestions(); track suggestion.label) {
+                        <button (click)="aiPrompt.set(suggestion.prompt)" 
+                                class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[8px] font-bold uppercase tracking-wider hover:bg-indigo-600/20 hover:border-indigo-500/50 transition-all text-zinc-400 hover:text-white">
+                          {{ suggestion.label }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                    <label for="ai-transition-select" class="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-2">Transition</label>
+                    <select id="ai-transition-select" [(ngModel)]="aiTransition" class="w-full bg-transparent border-none focus:ring-0 text-[10px] font-bold uppercase">
+                      <option value="fade">Fade</option>
+                      <option value="dissolve">Dissolve</option>
+                      <option value="wipe">Wipe</option>
+                      <option value="zoom">Zoom</option>
+                    </select>
+                  </div>
+                  <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                    <label for="ai-animation-select" class="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-2">Text Animation</label>
+                    <select id="ai-animation-select" [(ngModel)]="aiAnimation" class="w-full bg-transparent border-none focus:ring-0 text-[10px] font-bold uppercase">
+                      <option value="zoom-in">Zoom In</option>
+                      <option value="slide-up">Slide Up</option>
+                      <option value="typewriter">Typewriter</option>
+                      <option value="glitch">Glitch</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button (click)="generateAiScene()" [disabled]="!aiPrompt()" class="w-full py-4 rounded-2xl bg-indigo-600 font-black uppercase italic tracking-widest text-xs shadow-xl shadow-indigo-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                  Generate Scene
+                </button>
+              </div>
+            </div>
+          } @else if (showScriptAssistant()) {
+            <div class="animate-in fade-in slide-in-from-right-4 duration-500 space-y-6">
+              <div class="flex items-center justify-between">
+                <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Script Assistant</h3>
+                <button (click)="showScriptAssistant.set(false)" class="text-zinc-500 hover:text-white"><span class="material-icons text-sm">close</span></button>
+              </div>
+
+              <div class="space-y-4">
+                <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                  <label for="script-topic-input" class="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-2">Topic</label>
+                  <input id="script-topic-input" type="text" [(ngModel)]="scriptTopic" placeholder="e.g. Future of AI" class="w-full bg-transparent border-none focus:ring-0 text-xs font-bold">
+                </div>
+                <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                  <label for="script-keywords-input" class="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-2">Keywords (comma separated)</label>
+                  <input id="script-keywords-input" type="text" [(ngModel)]="scriptKeywords" placeholder="e.g. tech, innovation, robots" class="w-full bg-transparent border-none focus:ring-0 text-xs font-bold">
+                </div>
+                <button (click)="generateScript()" [disabled]="!scriptTopic()" class="w-full py-4 rounded-2xl bg-emerald-600 font-black uppercase italic tracking-widest text-xs shadow-xl shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                  Generate Script
+                </button>
+
+                @if (generatedScript(); as script) {
+                  <div class="mt-6 p-4 rounded-2xl bg-white/5 border border-white/10 animate-in slide-in-from-bottom-2">
+                    <h4 class="text-xs font-black uppercase tracking-widest text-emerald-400 mb-2">{{ script.title }}</h4>
+                    <p class="text-[10px] text-zinc-400 leading-relaxed max-h-40 overflow-y-auto no-scrollbar">{{ script.script }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else if (showTemplateSelector()) {
+            <div class="animate-in fade-in slide-in-from-right-4 duration-500 space-y-6">
+              <div class="flex items-center justify-between">
+                <h3 class="text-[10px] font-black text-amber-400 uppercase tracking-widest">Video Templates</h3>
+                <button (click)="showTemplateSelector.set(false)" class="text-zinc-500 hover:text-white"><span class="material-icons text-sm">close</span></button>
+              </div>
+              <div class="grid grid-cols-1 gap-4">
+                @for (temp of videoService.allTemplates(); track temp.id) {
+                  <button (click)="applyTemplate(temp)" class="group relative aspect-video rounded-2xl overflow-hidden border border-white/10 hover:border-amber-500/50 transition-all">
+                    <img [src]="temp.thumbnailUrl" [alt]="temp.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerpolicy="no-referrer">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4 text-left">
+                      <p class="text-[10px] font-black uppercase tracking-widest text-white">{{ temp.name }}</p>
+                      <p class="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">By {{ temp.author }}</p>
+                    </div>
+                  </button>
+                }
+              </div>
+            </div>
+          } @else if (showAudioPanel()) {
             <div class="animate-in fade-in slide-in-from-right-4 duration-300">
               <div class="flex items-center justify-between mb-6">
                 <h3 class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Audio Editing</h3>
@@ -630,6 +745,27 @@ export class EditorComponent implements OnInit {
   showStoryElements = signal(false);
   showAudioPanel = signal(false);
   showAudioLibrary = signal(false);
+  showScriptAssistant = signal(false);
+  showTemplateSelector = signal(false);
+  showAiGeneratePanel = signal(false);
+  
+  scriptTopic = signal('');
+  scriptKeywords = signal('');
+  generatedScript = signal<ScriptResult | null>(null);
+  
+  aiPrompt = signal('');
+  aiTransition = signal('fade');
+  aiAnimation = signal('zoom-in');
+
+  promptSuggestions = signal([
+    { label: 'Drone Shot', prompt: 'Cinematic drone shot of a misty mountain range at sunrise, 4k, hyper-realistic' },
+    { label: 'Cyberpunk', prompt: 'Neon-lit cyberpunk city street at night with rain reflections and flying cars' },
+    { label: 'Product Reveal', prompt: 'Minimalist studio lighting revealing a sleek luxury watch on a rotating marble pedestal' },
+    { label: 'Travel Vlog', prompt: 'Vibrant and fast-paced montage of a tropical beach with turquoise water and palm trees' },
+    { label: 'Retro VHS', prompt: 'Lo-fi retro VHS aesthetic of a 1980s arcade with glitch effects and neon signs' },
+    { label: 'Gaming', prompt: 'High-energy gaming setup with RGB lighting and a professional player in intense competition' }
+  ]);
+
   audioSearchQuery = signal('');
   selectedMood = signal<string | null>(null);
   bpmFilter = signal(60);
@@ -925,6 +1061,68 @@ export class EditorComponent implements OnInit {
   async applyCaptionStyle(style: string) {
     await this.adService.incrementClick();
     this.activeCaption.set(`${style.toUpperCase()} STYLE`);
+  }
+
+  async generateScript() {
+    if (!this.scriptTopic()) return;
+    await this.adService.incrementClick();
+    this.isProcessing.set(true);
+    this.processingText.set('Writing Script');
+    try {
+      const keywords = this.scriptKeywords().split(',').map(k => k.trim()).filter(k => k);
+      const result = await this.aiService.generateScript(this.scriptTopic(), keywords);
+      this.generatedScript.set(result);
+      this.activeCaption.set('SCRIPT READY!');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.isProcessing.set(false);
+    }
+  }
+
+  async applyTemplate(template: Template) {
+    await this.adService.incrementClick();
+    this.isProcessing.set(true);
+    this.processingText.set('Applying Template');
+    await new Promise(r => setTimeout(r, 2000));
+    this.videoService.updateProject({ 
+      clips: template.config.clips, 
+      captions: template.config.captions,
+      thumbnailUrl: template.thumbnailUrl
+    });
+    this.isProcessing.set(false);
+    this.showTemplateSelector.set(false);
+    this.activeCaption.set('TEMPLATE APPLIED!');
+  }
+
+  async generateAiScene() {
+    if (!this.aiPrompt()) return;
+    await this.adService.incrementClick();
+    this.isProcessing.set(true);
+    this.processingText.set('AI Scene Generation');
+    try {
+      const prompt = `${this.aiPrompt()}. Transition: ${this.aiTransition()}. Text Animation: ${this.aiAnimation()}.`;
+      const videoUrl = await this.aiService.generateVideo(prompt, 'Cinematic', '720p', '9:16');
+      
+      const currentClips = this.project()?.clips || [];
+      const newClip = {
+        id: 'clip-' + Math.random().toString(36).substr(2, 5),
+        url: videoUrl,
+        startTime: 0,
+        duration: 10,
+        type: 'generated' as const
+      };
+      
+      this.videoService.updateProject({ clips: [...currentClips, newClip] });
+      this.aiPrompt.set('');
+      this.showAiGeneratePanel.set(false);
+      this.activeCaption.set('SCENE ADDED!');
+    } catch (e) {
+      console.error(e);
+      alert('Generation failed. Please try again.');
+    } finally {
+      this.isProcessing.set(false);
+    }
   }
 
   formatWaveformTime(index: number): string {

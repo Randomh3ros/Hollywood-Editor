@@ -2,6 +2,12 @@ import { Injectable } from '@angular/core';
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { StoryElement } from './video.service';
 
+export interface ScriptResult {
+  title: string;
+  script: string;
+  scenes: { description: string; dialogue: string }[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -208,5 +214,41 @@ export class AiService {
       }
     }
     throw new Error('Thumbnail generation failed');
+  }
+
+  async generateScript(topic: string, keywords: string[]): Promise<ScriptResult> {
+    if (!this.ai) throw new Error('AI Service not initialized');
+    const response = await this.ai.models.generateContent({
+      model: "gemini-3.1-pro-preview",
+      contents: `Create a professional video script about "${topic}". 
+      Keywords to include: ${keywords.join(', ')}.
+      Return a JSON object with:
+      - title: A catchy title
+      - script: The full narrative script
+      - scenes: An array of { description: visual description, dialogue: spoken text }`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            script: { type: Type.STRING },
+            scenes: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  description: { type: Type.STRING },
+                  dialogue: { type: Type.STRING }
+                },
+                required: ["description", "dialogue"]
+              }
+            }
+          },
+          required: ["title", "script", "scenes"]
+        }
+      }
+    });
+    return JSON.parse(response.text || '{}');
   }
 }
