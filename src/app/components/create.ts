@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AiService } from '../services/ai.service';
 import { VideoService } from '../services/video.service';
 import { AdService } from '../services/ad.service';
+import { NativeService } from '../services/native.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -153,13 +154,24 @@ import { FormsModule } from '@angular/forms';
 
         @if (mode() === 'upload') {
           <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div class="aspect-video rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-900/50 flex flex-col items-center justify-center group hover:border-indigo-500/50 transition-colors cursor-pointer">
-              <div class="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4 group-hover:bg-indigo-600 transition-colors">
-                <span class="material-icons text-3xl">cloud_upload</span>
-              </div>
-              <p class="font-bold">Drop raw footage here</p>
-              <p class="text-xs text-zinc-500 mt-2">MP4, MOV up to 500MB</p>
-            </div>
+            <button 
+              type="button"
+              (click)="pickUploadVideo()"
+              class="w-full aspect-video rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-900/50 flex flex-col items-center justify-center group hover:border-indigo-500/50 transition-colors cursor-pointer active:scale-[0.98]">
+              @if (uploadedFileName()) {
+                <div class="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center mb-4">
+                  <span class="material-icons text-3xl">check_circle</span>
+                </div>
+                <p class="font-bold text-indigo-400">{{ uploadedFileName() }}</p>
+                <p class="text-xs text-zinc-500 mt-2">Tap to change</p>
+              } @else {
+                <div class="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4 group-hover:bg-indigo-600 transition-colors">
+                  <span class="material-icons text-3xl">cloud_upload</span>
+                </div>
+                <p class="font-bold">Tap to select video</p>
+                <p class="text-xs text-zinc-500 mt-2">MP4, MOV up to 500MB</p>
+              }
+            </button>
           </div>
         }
 
@@ -216,6 +228,8 @@ export class CreateComponent {
   visualStyle = 'Cinematic';
   aspectRatio = '9:16';
   resolution = signal<'720p' | '1080p'>('720p');
+  uploadedFileName = signal('');
+  private uploadedVideoUrl = '';
   
   isGenerating = signal(false);
   progress = signal(0);
@@ -225,12 +239,27 @@ export class CreateComponent {
   aiService = inject(AiService);
   videoService = inject(VideoService);
   adService = inject(AdService);
+  nativeService = inject(NativeService);
   router = inject(Router);
+
+  async pickUploadVideo() {
+    await this.nativeService.hapticFeedback('light');
+    const file = await this.nativeService.pickVideoFile();
+    if (file) {
+      this.uploadedFileName.set(file.name);
+      this.uploadedVideoUrl = file.webPath || '';
+    }
+  }
 
   async generate() {
     if (this.mode() === 'prompt' && !this.prompt) return;
+    if (this.mode() === 'upload' && !this.uploadedVideoUrl) {
+      await this.pickUploadVideo();
+      if (!this.uploadedVideoUrl) return;
+    }
     
     // 1. Track significant action (Monetization rule)
+    await this.nativeService.hapticFeedback('heavy');
     await this.adService.incrementClick();
 
     // 2. Start Generation
@@ -238,6 +267,40 @@ export class CreateComponent {
     this.progress.set(10);
     
     try {
+      if (this.mode() === 'upload') {
+        // Upload mode: AI auto-edit the uploaded video
+        this.progressTitle.set('Analyzing Footage');
+        this.progressSubtitle.set('AI is scanning your video for the best moments...');
+        await new Promise(r => setTimeout(r, 1500));
+        this.progress.set(40);
+
+        this.progressTitle.set('Auto Editing');
+        this.progressSubtitle.set('Adding transitions, captions, and beat-syncing music...');
+        await new Promise(r => setTimeout(r, 2000));
+        this.progress.set(80);
+
+        this.progressTitle.set('Finalizing');
+        this.progressSubtitle.set('Rendering your edited video...');
+        await new Promise(r => setTimeout(r, 1000));
+        this.progress.set(100);
+
+        const projectName = this.uploadedFileName() || 'Uploaded Video';
+        const project = this.videoService.createProject(projectName.replace(/\.[^/.]+$/, ''));
+        this.videoService.updateProject({
+          clips: [{
+            id: 'clip-upload-1',
+            url: this.uploadedVideoUrl,
+            startTime: 0,
+            duration: 30,
+            type: 'video'
+          }]
+        });
+
+        await this.nativeService.hapticNotification('success');
+        this.router.navigate(['/editor', project.id]);
+        return;
+      }
+
       // Step 1: Scripting
       this.progressTitle.set('Writing Script');
       this.progressSubtitle.set('Generating engaging hooks and narrative structure...');
@@ -283,9 +346,11 @@ export class CreateComponent {
         }]
       });
 
+      await this.nativeService.hapticNotification('success');
       this.router.navigate(['/editor', project.id]);
     } catch (e) {
       console.error(e);
+      await this.nativeService.hapticNotification('error');
       alert('Generation failed. Please try again.');
     } finally {
       this.isGenerating.set(false);

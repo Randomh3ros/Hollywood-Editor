@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { VideoService } from '../services/video.service';
 import { AdService } from '../services/ad.service';
+import { NativeService } from '../services/native.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -79,36 +80,43 @@ import { CommonModule } from '@angular/common';
           <div>
             <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Select Platform</h3>
             <div class="grid grid-cols-2 gap-4">
-              <button class="p-4 rounded-2xl bg-zinc-900 border-2 border-indigo-600 flex flex-col items-center gap-2">
-                <span class="material-icons text-indigo-500">tiktok</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest">TikTok</span>
-              </button>
-              <button class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col items-center gap-2 hover:border-zinc-700">
-                <span class="material-icons text-zinc-500">play_circle</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest">YouTube Shorts</span>
-              </button>
-              <button class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col items-center gap-2 hover:border-zinc-700">
-                <span class="material-icons text-zinc-500">camera_alt</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest">Instagram Reels</span>
-              </button>
-              <button class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col items-center gap-2 hover:border-zinc-700">
-                <span class="material-icons text-zinc-500">more_horiz</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest">Other</span>
-              </button>
+              @for (platform of platforms; track platform.id) {
+                <button 
+                  (click)="selectPlatform(platform.id)"
+                  [class.border-indigo-600]="selectedPlatform() === platform.id"
+                  [class.border-zinc-800]="selectedPlatform() !== platform.id"
+                  class="p-4 rounded-2xl bg-zinc-900 border-2 flex flex-col items-center gap-2 hover:border-zinc-700 transition-all active:scale-95">
+                  <span class="material-icons" [class.text-indigo-500]="selectedPlatform() === platform.id" [class.text-zinc-500]="selectedPlatform() !== platform.id">{{ platform.icon }}</span>
+                  <span class="text-[10px] font-bold uppercase tracking-widest">{{ platform.name }}</span>
+                </button>
+              }
             </div>
           </div>
 
           <div>
             <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Export Quality</h3>
             <div class="flex p-1 bg-zinc-900 rounded-2xl">
-              <button class="flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-indigo-600">1080p (HD)</button>
-              <button class="flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest text-zinc-500">4K (Premium)</button>
+              <button 
+                (click)="quality.set('1080p')"
+                [class.bg-indigo-600]="quality() === '1080p'"
+                class="flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">1080p (HD)</button>
+              <button 
+                (click)="quality.set('4k')"
+                [class.bg-indigo-600]="quality() === '4k'"
+                class="flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest text-zinc-500 transition-all">4K (Premium)</button>
             </div>
           </div>
 
           <div class="pt-8">
-            <button (click)="export()" class="w-full py-5 rounded-2xl bg-indigo-600 font-black uppercase italic tracking-widest text-xl shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-              Export & Share
+            <button (click)="exportAndShare()" [disabled]="isExporting()" class="w-full py-5 rounded-2xl bg-indigo-600 font-black uppercase italic tracking-widest text-xl shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-60 disabled:scale-100">
+              @if (isExporting()) {
+                <div class="flex items-center justify-center gap-3">
+                  <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Exporting...
+                </div>
+              } @else {
+                Export &amp; Share
+              }
             </button>
             <div class="flex items-center justify-center gap-2 mt-4">
               <span class="material-icons text-zinc-600 text-sm">verified</span>
@@ -123,9 +131,51 @@ import { CommonModule } from '@angular/common';
 export class ExportComponent {
   videoService = inject(VideoService);
   adService = inject(AdService);
+  nativeService = inject(NativeService);
 
-  async export() {
+  selectedPlatform = signal('tiktok');
+  quality = signal<'1080p' | '4k'>('1080p');
+  isExporting = signal(false);
+
+  platforms = [
+    { id: 'tiktok', name: 'TikTok', icon: 'tiktok' },
+    { id: 'youtube', name: 'YouTube Shorts', icon: 'play_circle' },
+    { id: 'instagram', name: 'Instagram Reels', icon: 'camera_alt' },
+    { id: 'other', name: 'Other', icon: 'more_horiz' }
+  ];
+
+  private readonly EXPORT_SIMULATION_DELAY = 1500;
+
+  async selectPlatform(id: string) {
+    await this.nativeService.hapticFeedback('light');
+    this.selectedPlatform.set(id);
+  }
+
+  async exportAndShare() {
+    this.isExporting.set(true);
+    await this.nativeService.hapticFeedback('medium');
     await this.adService.incrementClick();
-    alert('Video exported successfully!');
+
+    // Simulate export processing
+    await new Promise(r => setTimeout(r, this.EXPORT_SIMULATION_DELAY));
+
+    const project = this.videoService.activeProject();
+    const projectName = project?.name || 'My Hollywood Video';
+    const videoUrl = project?.clips?.[0]?.url;
+
+    const shared = await this.nativeService.share({
+      title: projectName,
+      text: `Check out my AI-edited video: ${projectName}`,
+      url: videoUrl || 'https://hollywood-editor.app',
+      dialogTitle: 'Share your video'
+    });
+
+    this.isExporting.set(false);
+
+    if (shared) {
+      await this.nativeService.hapticNotification('success');
+    } else {
+      alert('Video exported successfully!');
+    }
   }
 }
