@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { VideoService, Project } from '../services/video.service';
 import { AdService } from '../services/ad.service';
+import { NativeService } from '../services/native.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -197,29 +198,48 @@ import { CommonModule } from '@angular/common';
 export class HomeComponent {
   videoService = inject(VideoService);
   adService = inject(AdService);
+  nativeService = inject(NativeService);
   router = inject(Router);
 
   async createNewProject() {
+    await this.nativeService.hapticFeedback('medium');
     await this.adService.incrementClick();
     const newProject = this.videoService.createProject('Untitled Project');
     this.router.navigate(['/editor', newProject.id]);
   }
 
   async selectProject(project: Project) {
+    await this.nativeService.hapticFeedback('light');
     await this.adService.incrementClick();
     this.videoService.setCurrentProject(project);
     this.router.navigate(['/editor', project.id]);
   }
 
   async createWithAi() {
+    await this.nativeService.hapticFeedback('medium');
     await this.adService.incrementClick();
     this.router.navigate(['/create']);
   }
 
   async uploadVideo() {
+    await this.nativeService.hapticFeedback('light');
     await this.adService.incrementClick();
-    // Simulate upload
-    const newProject = this.videoService.createProject('Uploaded Video');
+
+    const picked = await this.nativeService.pickVideoFile();
+    const newProject = this.videoService.createProject(picked?.name?.replace(/\.[^/.]+$/, '') || 'Uploaded Video');
+
+    if (picked?.webPath) {
+      this.videoService.updateProject({
+        clips: [{
+          id: 'clip-upload-1',
+          url: picked.webPath,
+          startTime: 0,
+          duration: 30,
+          type: 'video'
+        }]
+      });
+    }
+
     this.router.navigate(['/editor', newProject.id]);
   }
 }

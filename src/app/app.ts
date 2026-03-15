@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AdOverlayComponent } from './components/ad-overlay';
 import { PrivacyOverlayComponent } from './components/privacy-overlay';
 import { AiAgentComponent } from './components/ai-agent';
 import { CommonModule } from '@angular/common';
+import { NativeService } from './services/native.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -14,6 +15,7 @@ import { CommonModule } from '@angular/common';
 })
 export class App implements OnInit {
   bgGradient = signal('from-zinc-950 via-zinc-900 to-black');
+  private nativeService = inject(NativeService);
 
   ngOnInit() {
     const gradients = [
@@ -26,5 +28,8 @@ export class App implements OnInit {
       'from-lime-950 via-emerald-950 to-teal-950'
     ];
     this.bgGradient.set(gradients[Math.floor(Math.random() * gradients.length)]);
+
+    // Configure native Android status bar for immersive experience
+    this.nativeService.configureStatusBar();
   }
 }
